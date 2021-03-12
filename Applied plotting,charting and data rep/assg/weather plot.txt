@@ -1,0 +1,55 @@
+# Import useful libraries
+import matplotlib.pyplot as plt
+import matplotlib.dates as dates
+import matplotlib.ticker as ticker
+import pandas as pd
+import numpy as np
+ 
+# Read the dataframe and have a peak at it
+df = pd.read_csv('datasets/weather_data.csv')
+df.head(4)
+
+# Transform the temperature to degrees Celsius
+df['Data_Value'] = df['Data_Value']/10
+
+# Transform the date to datetime
+df['Date'] = pd.to_datetime(df['Date'])
+
+# Get the year of each measurement
+df['Year'] = df['Date'].dt.year
+
+# Get the month and day of each measurement
+df['Month_Day'] = df['Date'].dt.strftime('%m-%d')
+
+# Remove February 29
+df = df[df['Month_Day']!='02-29']
+
+# Find the record high and lows from 2005-2014
+df_highs = df[(df.Year>=2005)&(df.Year<2015)&(df.Element=='TMAX')].groupby(['Month_Day'])['Data_Value'].max()
+df_lows = df[(df.Year>=2005)&(df.Year<2015)&(df.Element=='TMIN')].groupby(['Month_Day'])['Data_Value'].min()
+
+# Create datetime index
+date_index = np.arange('2015-01-01','2016-01-01', dtype='datetime64[D]')
+
+# Plot high and lows
+plt.figure(figsize=(12,8))
+plt.plot(date_index, df_highs, color='lightcoral',linewidth=1)
+plt.plot(date_index, df_lows, color='skyblue', linewidth=1)
+plt.xlabel('Date', fontsize=15)
+plt.ylabel('° Celsius', fontsize=15)
+
+# Set x and y limits.
+ax = plt.gca()
+ax.axis(['2015/01/01','2015/12/31',-10,48])
+
+# Format the xticks to show the month centered
+# Original code can be found here:
+# http://matplotlib.org/examples/pylab_examples/centered_ticklabels.html
+ax.xaxis.set_major_locator(dates.MonthLocator())
+ax.xaxis.set_minor_locator(dates.MonthLocator(bymonthday=15))
+ax.xaxis.set_major_formatter(ticker.NullFormatter())
+ax.xaxis.set_minor_formatter(dates.DateFormatter('%b'))
+for tick in ax.xaxis.get_minor_ticks():
+    tick.tick1line.set_markersize(0)
+    tick.tick2line.set_markersize(0)
+    tick.label1.set_horizontalalignment('center')
